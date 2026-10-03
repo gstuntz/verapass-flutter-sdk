@@ -1,0 +1,30 @@
+name: facera
+description: Face verification for Flutter apps (iOS and Android) - camera, on-device guidance, the liveness check, and results, using Face Platform session client tokens.
+version: 0.1.0
+homepage: https://github.com/gstuntz/facera-flutter-sdk
+repository: https://github.com/gstuntz/facera-flutter-sdk
+issue_tracker: https://github.com/gstuntz/facera-flutter-sdk/issues
+
+environment:
+  sdk: ^3.12.0
+  flutter: ">=3.44.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  camera: ^0.12.1
+  flutter_tts: ^4.2.5
+  http: ^1.6.0
+  image: ^4.5.0
+  tflite_flutter: ^0.12.1
+  clock: ^1.1.3
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  assets:
+    # MediaPipe BlazeFace (short range), Apache 2.0: on-device face detection for guidance.
+    - assets/blaze_face_short_range.tflite
