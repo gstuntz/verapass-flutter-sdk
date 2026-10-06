@@ -39,7 +39,7 @@ class FaceVerificationView extends StatefulWidget {
     required this.onClose,
   }) : assert((clientToken == null) != (clientTokenProvider == null), 'Pass exactly one of clientToken and clientTokenProvider');
 
-  /// Base URL of the Face Platform API, e.g. https://api.example.com.
+  /// Base URL of the veraPass API, e.g. https://api.example.com.
   final Uri apiUrl;
   final String? clientToken;
   final Future<String> Function()? clientTokenProvider;
@@ -59,7 +59,7 @@ class FaceVerificationView extends StatefulWidget {
 }
 
 /// Replaces the platform pieces (camera, detector, speech, JPEG encoding) for tests. Not
-/// part of the public API; exposed through `package:facera/testing.dart`.
+/// part of the public API; exposed through `package:verapass/testing.dart`.
 FlowDependencies? debugFlowDependenciesOverride;
 
 class _FaceVerificationViewState extends State<FaceVerificationView> with WidgetsBindingObserver {

@@ -11,8 +11,8 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:facera/facera.dart';
-import 'package:facera/testing.dart';
+import 'package:verapass/verapass.dart';
+import 'package:verapass/testing.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -20,7 +20,7 @@ import 'package:http/http.dart' as http;
 import 'package:image/image.dart' as img;
 import 'package:integration_test/integration_test.dart';
 
-const api = String.fromEnvironment('API_URL', defaultValue: 'https://api.ridafleet.com');
+const api = String.fromEnvironment('API_URL', defaultValue: 'https://api.verapass.app');
 const demoServer = String.fromEnvironment('DEMO_SERVER', defaultValue: 'http://localhost:5181');
 const realCamera = String.fromEnvironment('REAL_CAMERA');
 

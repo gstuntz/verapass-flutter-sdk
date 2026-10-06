@@ -26,7 +26,7 @@ class TtsSpeaker implements Speaker {
   /// Platform speech engines can be missing or never answer (some Android devices and
   /// emulators). Every call is time-limited so speech can never stall a verification.
   static Future<void> _limited(Future<dynamic> call, Duration limit) =>
-      call.then((_) {}).timeout(limit, onTimeout: () {}).catchError((Object e) => debugPrint('[facera] Text-to-speech: $e'));
+      call.then((_) {}).timeout(limit, onTimeout: () {}).catchError((Object e) => debugPrint('[verapass] Text-to-speech: $e'));
 
   Future<void> _ensureSetup() => _setup ??= () async {
     const limit = Duration(seconds: 2);

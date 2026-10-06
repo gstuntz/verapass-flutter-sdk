@@ -166,7 +166,7 @@ class VerificationController extends ChangeNotifier {
     _run?.cancel();
     final run = _run = _Run();
     _detectorFuture ??= dependencies.detector().catchError((Object e) {
-      debugPrint('[facera] Face detection unavailable, using timed capture: $e');
+      debugPrint('[verapass] Face detection unavailable, using timed capture: $e');
       return null;
     });
     error = null;
@@ -237,7 +237,7 @@ class VerificationController extends ChangeNotifier {
       throw const FaceVerificationException(FaceVerificationErrorCode.referenceMissing, 'The session has no reference photo yet');
     }
     if (!options.liveness && session.challenge.isNotEmpty) {
-      debugPrint('[facera] This session requires liveness; `liveness: false` is ignored.');
+      debugPrint('[verapass] This session requires liveness; `liveness: false` is ignored.');
     }
     _session = session;
     _poses = [StepPose.frontal, ...session.challenge.map(StepPose.fromAction)];

@@ -1,9 +1,9 @@
-name: facera
-description: Face verification for Flutter apps (iOS and Android) - camera, on-device guidance, the liveness check, and results, using Face Platform session client tokens.
+name: verapass
+description: Face verification for Flutter apps (iOS and Android) - camera, on-device guidance, the liveness check, and results, using veraPass session client tokens.
 version: 0.1.0
-homepage: https://github.com/gstuntz/facera-flutter-sdk
-repository: https://github.com/gstuntz/facera-flutter-sdk
-issue_tracker: https://github.com/gstuntz/facera-flutter-sdk/issues
+homepage: https://github.com/gstuntz/verapass-flutter-sdk
+repository: https://github.com/gstuntz/verapass-flutter-sdk
+issue_tracker: https://github.com/gstuntz/verapass-flutter-sdk/issues
 
 environment:
   sdk: ^3.12.0

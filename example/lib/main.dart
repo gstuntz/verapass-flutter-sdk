@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:facera/facera.dart';
+import 'package:verapass/verapass.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
@@ -44,7 +44,7 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  final apiUrl = TextEditingController(text: 'https://api.ridafleet.com');
+  final apiUrl = TextEditingController(text: 'https://api.verapass.app');
   // The demo server runs on the developer's computer: the Android emulator reaches it at
   // 10.0.2.2, the iOS simulator at localhost; a real phone needs the computer's LAN address.
   final demoServer = TextEditingController(
@@ -126,7 +126,7 @@ class _HomePageState extends State<HomePage> {
           ExpansionTile(
             title: const Text('Demo settings'),
             children: [
-              TextField(controller: apiUrl, decoration: const InputDecoration(labelText: 'Face Platform API URL')),
+              TextField(controller: apiUrl, decoration: const InputDecoration(labelText: 'veraPass API URL')),
               TextField(controller: demoServer, decoration: const InputDecoration(labelText: 'Your server (demo server) URL')),
               const SizedBox(height: 8),
               DropdownButtonFormField<String>(

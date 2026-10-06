@@ -3,9 +3,9 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:clock/clock.dart';
-import 'package:facera/facera.dart';
-import 'package:facera/src/api/client_api.dart';
-import 'package:facera/testing.dart';
+import 'package:verapass/verapass.dart';
+import 'package:verapass/src/api/client_api.dart';
+import 'package:verapass/testing.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;

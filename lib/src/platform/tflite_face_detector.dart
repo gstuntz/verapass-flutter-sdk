@@ -12,7 +12,7 @@ import '../flow/ports.dart';
 class TfliteFaceDetector implements FaceDetector {
   TfliteFaceDetector._(this._interpreter);
 
-  static const asset = 'packages/facera/assets/blaze_face_short_range.tflite';
+  static const asset = 'packages/verapass/assets/blaze_face_short_range.tflite';
 
   static Future<TfliteFaceDetector> load() async {
     final interpreter = await Interpreter.fromAsset(asset, options: InterpreterOptions()..threads = 2);

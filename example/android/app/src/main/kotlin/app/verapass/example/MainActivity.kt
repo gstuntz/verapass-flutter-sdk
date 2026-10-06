@@ -1,4 +1,4 @@
-package com.faceplatform.face_platform_example
+package app.verapass.example
 
 import io.flutter.embedding.android.FlutterActivity
 

@@ -2,8 +2,8 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
-import 'package:facera/src/detection/blaze_face_decoder.dart';
-import 'package:facera/src/detection/frame.dart';
+import 'package:verapass/src/detection/blaze_face_decoder.dart';
+import 'package:verapass/src/detection/frame.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:image/image.dart' as img;
 

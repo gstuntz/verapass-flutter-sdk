@@ -1,5 +1,5 @@
 /// Face verification for Flutter apps: camera, on-device guidance, the liveness check, and
-/// the result, against the Face Platform API.
+/// the result, against the veraPass API.
 ///
 /// Start with [FaceVerification.start], or embed [FaceVerificationView].
 library;

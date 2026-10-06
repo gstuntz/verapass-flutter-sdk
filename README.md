@@ -1,4 +1,4 @@
-# Facera (Flutter)
+# veraPass (Flutter)
 
 Face verification for Flutter apps on iOS and Android: camera, on-device guidance, the head-turn
 liveness check, spoken instructions, and the result. It uses the same API and flow as the web SDK.
@@ -17,7 +17,7 @@ your server ──API key──► GET /api/v1/sessions/{id}                    
 ## Usage
 
 ```dart
-import 'package:facera/facera.dart';
+import 'package:verapass/verapass.dart';
 
 final result = await FaceVerification.start(
   context,
@@ -151,7 +151,7 @@ interrupt the flow.
 
 ```
 lib/
-  facera.dart               public API (everything else is internal)
+  verapass.dart             public API (everything else is internal)
   testing.dart              test hooks: replace the camera, detector, and speech in tests
   src/
     face_verification.dart  FaceVerification.start
