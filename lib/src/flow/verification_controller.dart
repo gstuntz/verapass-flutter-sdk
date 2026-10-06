@@ -190,7 +190,7 @@ class VerificationController extends ChangeNotifier {
       run.check();
       _setBusy(FlowPhase.submitting, messages.submitting);
       unawaited(_speaker.say(messages.submitting, instruction: true));
-      final finished = await _api!.verify(List.of(_photos), liveness: _poses.length > 1);
+      final finished = await _api!.verify(List.of(_photos), liveness: _session!.checksLiveness);
       run.check();
       _showResult(finished.toResult());
     } on _Cancelled {
@@ -233,14 +233,22 @@ class VerificationController extends ChangeNotifier {
       throw FaceVerificationException(FaceVerificationErrorCode.sessionUsed, 'Session is ${session.status.name}');
     }
     if (cameraError != null) throw cameraError;
-    if (!session.referenceReady) {
+    final missing = (options.checks ?? const <FaceCheck>{}).difference(session.checks);
+    if (missing.isNotEmpty) {
+      throw FaceVerificationException(
+        FaceVerificationErrorCode.checksMismatch,
+        "The session doesn't check ${missing.map((c) => c.wireName).join(' or ')}; create it with these checks",
+      );
+    }
+    if (session.checksFaceMatch && !session.referenceReady) {
       throw const FaceVerificationException(FaceVerificationErrorCode.referenceMissing, 'The session has no reference photo yet');
     }
-    if (!options.liveness && session.challenge.isNotEmpty) {
-      debugPrint('[verapass] This session requires liveness; `liveness: false` is ignored.');
+    // ignore: deprecated_member_use_from_same_package
+    if (!options.liveness && session.checksLiveness) {
+      debugPrint('[verapass] This session checks liveness; `liveness: false` is ignored.');
     }
     _session = session;
-    _poses = [StepPose.frontal, ...session.challenge.map(StepPose.fromAction)];
+    _poses = [StepPose.frontal, if (session.checksLiveness) ...session.challenge.map(StepPose.fromAction)];
     totalSteps = _poses.length;
   }
 

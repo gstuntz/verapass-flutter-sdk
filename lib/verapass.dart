@@ -9,5 +9,5 @@ export 'src/face_verification.dart' show FaceVerification;
 export 'src/guidance/pose.dart' show Guidance;
 export 'src/l10n/messages.dart' show FaceVerificationMessages;
 export 'src/options.dart' show FaceCameraLens, FaceCameraOptions, FaceCameraResolution, FaceVerificationOptions, FaceVerificationTheme;
-export 'src/result.dart' show FaceFailureCode, FaceSessionStatus, FaceVerificationResult;
+export 'src/result.dart' show FaceCheck, FaceFailureCode, FaceSessionStatus, FaceVerificationResult;
 export 'src/ui/verification_view.dart' show FaceVerificationOutcome, FaceVerificationView;

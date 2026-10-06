@@ -15,6 +15,7 @@ class ClientSession {
     required this.status,
     required this.challenge,
     required this.referenceReady,
+    this.checks = const {FaceCheck.liveness, FaceCheck.faceMatch},
     this.failureCode,
     this.failureFrame,
   });
@@ -23,6 +24,7 @@ class ClientSession {
     id: json['id']! as String,
     status: FaceSessionStatus.parse(json['status']! as String),
     challenge: (json['challenge'] as List<Object?>?)?.cast<String>() ?? const [],
+    checks: _parseChecks(json),
     referenceReady: json['reference_ready'] as bool? ?? false,
     failureCode: FaceFailureCode.parse(json['failure_code'] as String?),
     failureFrame: json['failure_frame'] as int?,
@@ -31,13 +33,28 @@ class ClientSession {
   final String id;
   final FaceSessionStatus status;
   final List<String> challenge;
+
+  /// What the session verifies; decides what is captured.
+  final Set<FaceCheck> checks;
   final bool referenceReady;
+
+  bool get checksLiveness => checks.contains(FaceCheck.liveness);
+  bool get checksFaceMatch => checks.contains(FaceCheck.faceMatch);
+
+  /// Servers that predate checks always matched faces, with liveness iff a challenge.
+  static Set<FaceCheck> _parseChecks(Map<String, Object?> json) {
+    final raw = (json['checks'] as List<Object?>?)?.cast<String>();
+    if (raw != null && raw.isNotEmpty) return raw.map(FaceCheck.parse).whereType<FaceCheck>().toSet();
+    final challenge = json['challenge'] as List<Object?>?;
+    return challenge != null && challenge.isNotEmpty ? const {FaceCheck.liveness, FaceCheck.faceMatch} : const {FaceCheck.faceMatch};
+  }
   final FaceFailureCode? failureCode;
   final int? failureFrame;
 
   FaceVerificationResult toResult() => FaceVerificationResult(
     sessionId: id,
     status: status,
+    checks: checks,
     failureCode: status == FaceSessionStatus.verificationPassed ? null : (failureCode ?? (status == FaceSessionStatus.expired ? FaceFailureCode.expired : null)),
     failureFrame: failureFrame,
   );
@@ -63,7 +80,7 @@ class ClientApi {
   Future<ClientSession> getSession() => _send(http.Request('GET', _base));
 
   /// Submits photos in order: facing the camera, then one per challenge action
-  /// (field "frames"), or a single "probe" for sessions without a challenge.
+  /// (field "frames"), or a single "probe" for sessions that don't check liveness.
   Future<ClientSession> verify(List<Uint8List> photos, {required bool liveness}) {
     final request = http.MultipartRequest('POST', _base.replace(path: '${_base.path}/verify'));
     final field = liveness ? 'frames' : 'probe';

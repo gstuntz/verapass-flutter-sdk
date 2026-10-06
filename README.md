@@ -3,16 +3,40 @@
 Face verification for Flutter apps on iOS and Android: camera, on-device guidance, the head-turn
 liveness check, spoken instructions, and the result. It uses the same API and flow as the web SDK.
 
+## Get an API key
+
+To get an API key, visit [verapass.app](https://verapass.app/) and create a free account.
+Create a project, then an API key under **API keys**. Keep the key on your server: the app
+never holds it.
+
 ## How it fits together
 
 There's no API key in the app. Anything shipped inside an app can be extracted, so the app only
 ever gets a **session client token**.
 
 ```
-your server ──API key──► POST /api/v1/sessions (+ /reference)   → client_token (fpct_…)
+your server ──API key──► POST /api/v1/sessions {checks} (+ /reference)  → client_token (fpct_…)
 your app    ──────────► FaceVerification.start(clientTokenProvider: …)   camera, guidance, liveness
 your server ──API key──► GET /api/v1/sessions/{id}                       the result you act on
 ```
+
+## Checks: liveness, face match, or both
+
+Each session verifies `liveness` (head-turn challenge and anti-spoofing), `face_match`
+(compare with the reference photo your server uploaded), or both. Your server picks them when
+it creates the session (`{"checks": ["liveness"]}`), within what its API key allows (set per
+key in the dashboard). Omit `checks` to run every check the key allows. The SDK follows the
+session:
+
+| Session checks | What the user does | Reference needed |
+|---|---|---|
+| `liveness` + `face_match` | Look at the camera, then turn their head as asked | Yes |
+| `liveness` | Look at the camera, then turn their head as asked | No |
+| `face_match` | One photo looking at the camera | Yes |
+
+The app can't change a session's checks. To make sure it never runs a session weaker than you
+expect, set `FaceVerificationOptions(checks: {FaceCheck.liveness, FaceCheck.faceMatch})`: a
+session that skips any of them fails with `checksMismatch`.
 
 ## Usage
 
@@ -53,7 +77,7 @@ One view is one verification. To start a new one in the same place, give it a ne
 |---|---|
 | `FaceVerification.start(context, apiUrl:, clientToken: \| clientTokenProvider:, options:)` | Full-screen flow. Returns a `FaceVerificationResult`. |
 | `FaceVerificationView(...)` | The same screen as a widget, with `onResult`, `onError`, and `onClose`. |
-| `FaceVerificationResult` | `sessionId`, `passed`, `status` (`FaceSessionStatus`), `failureCode` (`FaceFailureCode`), `failureFrame`. **Not proof**: confirm on your server. |
+| `FaceVerificationResult` | `sessionId`, `passed`, `status` (`FaceSessionStatus`), `checks` (`Set<FaceCheck>`), `failureCode` (`FaceFailureCode`), `failureFrame`. **Not proof**: confirm on your server. |
 | `FaceVerificationException` | `code` (`FaceVerificationErrorCode`), `message`, `retryable`. |
 | `FaceVerificationOptions` | See below. |
 | `FaceVerificationMessages` | All user-facing text. `.en`, `.es`, `.fr`, or your own (`copyWith`). |
@@ -67,7 +91,8 @@ Use `clientToken: 'fpct_…'` for a single session (no retry after a result), or
 |---|---|---|
 | `voice` | `false` | Spoken instructions with the device's own text-to-speech (no network voice service). |
 | `instructions` | `true` | Intro screen and on-screen hints. When off, screen readers still announce the hints. |
-| `liveness` | `true` | Perform the head-turn challenge. **The server decides**: a session that requires liveness can't skip it. |
+| `checks` | session's | Checks your app expects (`FaceCheck.liveness`, `FaceCheck.faceMatch`). What's captured follows the session; a session missing one fails with `checksMismatch`. |
+| `liveness` | `true` | Deprecated: the session's checks decide. `false` is ignored with a debug warning. |
 | `language` | `'en'` | `en`, `es`, or `fr` (regional tags like `es-MX` work); others fall back to English. |
 | `messages` | | Your own text, replacing the built-in language. |
 | `theme` | follows app | `FaceVerificationTheme(brightness:, accentColor:, backgroundColor:, textColor:)`. |

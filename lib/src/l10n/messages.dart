@@ -155,6 +155,7 @@ class FaceVerificationMessages {
     errorTitle: 'Something went wrong',
     errors: const {
       FaceVerificationErrorCode.configurationError: "This app isn't set up correctly. Please contact support.",
+      FaceVerificationErrorCode.checksMismatch: "This app isn't set up correctly. Please contact support.",
       FaceVerificationErrorCode.cameraDenied: 'Camera access is off. Allow it for this app in Settings, then try again.',
       FaceVerificationErrorCode.cameraNotFound: 'No camera was found on this device.',
       FaceVerificationErrorCode.cameraUnavailable: "The camera couldn't be started. Close other apps using it and try again.",

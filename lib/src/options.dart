@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'l10n/messages.dart';
+import 'result.dart';
 
 /// Which camera to use. The front camera is the default (a selfie flow); the back camera is
 /// for an operator verifying someone else.
@@ -31,7 +32,8 @@ class FaceVerificationOptions {
   const FaceVerificationOptions({
     this.voice = false,
     this.instructions = true,
-    this.liveness = true,
+    this.checks,
+    @Deprecated('The session\'s checks decide; use `checks` to assert what your app expects') this.liveness = true,
     this.language = 'en',
     this.messages,
     this.theme = const FaceVerificationTheme(),
@@ -45,8 +47,15 @@ class FaceVerificationOptions {
   /// Show the intro screen and on-screen hints. Screen readers always get the hints.
   final bool instructions;
 
-  /// Perform the head-turn liveness challenge when the session has one. The server decides
-  /// whether a session requires liveness; when it does, `false` can't skip it.
+  /// The checks your app expects. What is captured follows the session's checks, set by
+  /// your server when it creates the session; this can't change them, but the SDK refuses
+  /// ([FaceVerificationErrorCode.checksMismatch]) a session that skips any check listed here.
+  /// Null (default) accepts the session's checks.
+  final Set<FaceCheck>? checks;
+
+  /// Deprecated: what is captured follows the session's checks. `false` is ignored (with a
+  /// debug warning) for sessions that check liveness.
+  @Deprecated('The session\'s checks decide; use `checks` to assert what your app expects')
   final bool liveness;
 
   /// "en", "es", or "fr" (regional tags like "es-MX" work). Others fall back to English.

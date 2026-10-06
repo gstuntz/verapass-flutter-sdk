@@ -141,8 +141,9 @@ class FakeSpeaker implements Speaker {
 
 /// The client-token endpoints, in memory.
 class FakeServer {
-  FakeServer({this.challenge = const ['turn_left', 'turn_right'], this.referenceReady = true});
+  FakeServer({this.challenge = const ['turn_left', 'turn_right'], this.referenceReady = true, this.checks});
   final List<String> challenge;
+  final List<String>? checks; // null: an older server that doesn't report checks
   final bool referenceReady;
   String status = 'created';
   String verifyStatus = 'verification_passed';
@@ -154,6 +155,7 @@ class FakeServer {
   Map<String, Object?> _session() => {
     'id': 'session-1',
     'status': status,
+    'checks': ?checks,
     'challenge': challenge.isEmpty ? null : challenge,
     'expires_at': null,
     'completed_at': null,
@@ -263,6 +265,44 @@ void main() {
     await advance(tester, const Duration(seconds: 8));
 
     expect(h.server.posts.single.$2, ['probe']);
+  });
+
+  testWidgets('face_match only: one probe photo, reported in the result', (tester) async {
+    final h = Harness(server: FakeServer(checks: const ['face_match'], challenge: const []));
+    await open(tester, h.view());
+    await advance(tester, const Duration(seconds: 8));
+
+    expect(h.server.posts.single.$2, ['probe']);
+    expect(h.results.single.checks, {FaceCheck.faceMatch});
+  });
+
+  testWidgets('liveness only: head-turn photos, no reference needed', (tester) async {
+    final h = Harness(server: FakeServer(checks: const ['liveness'], referenceReady: false));
+    await open(tester, h.view());
+    await advance(tester, const Duration(seconds: 15));
+
+    expect(find.text('Verification complete'), findsOneWidget);
+    expect(h.server.posts.single.$2, ['frames', 'frames', 'frames']);
+    expect(h.results.single.checks, {FaceCheck.liveness});
+  });
+
+  testWidgets('face_match sessions still need the reference', (tester) async {
+    final h = Harness(server: FakeServer(checks: const ['liveness', 'face_match'], referenceReady: false));
+    await open(tester, h.view());
+    await advance(tester, const Duration(milliseconds: 500));
+
+    expect(find.textContaining("isn't ready yet"), findsOneWidget);
+    expect(h.server.posts, isEmpty);
+  });
+
+  testWidgets('refuses a session that skips a check the app expects', (tester) async {
+    final h = Harness(server: FakeServer(checks: const ['face_match'], challenge: const []));
+    await open(tester, h.view(options: const FaceVerificationOptions(checks: {FaceCheck.liveness, FaceCheck.faceMatch})));
+    await advance(tester, const Duration(milliseconds: 500));
+
+    expect(find.textContaining("isn't set up correctly"), findsOneWidget);
+    expect(h.server.posts, isEmpty);
+    expect(h.cameras.every((c) => c.closed), isTrue);
   });
 
   testWidgets('intro screen first when instructions are on', (tester) async {

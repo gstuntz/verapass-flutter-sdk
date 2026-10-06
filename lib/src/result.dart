@@ -1,3 +1,24 @@
+/// What a session verifies, chosen by your server when it creates the session (within what
+/// its API key allows).
+enum FaceCheck {
+  /// Head-turn challenge and anti-spoofing on the captured photos.
+  liveness,
+
+  /// Compare the captured face with the reference photo your server uploaded.
+  faceMatch;
+
+  String get wireName => switch (this) {
+    liveness => 'liveness',
+    faceMatch => 'face_match',
+  };
+
+  static FaceCheck? parse(String value) => switch (value) {
+    'liveness' => liveness,
+    'face_match' => faceMatch,
+    _ => null,
+  };
+}
+
 /// Session statuses, as the API reports them.
 enum FaceSessionStatus {
   created,
@@ -65,15 +86,25 @@ enum FaceFailureCode {
 /// The outcome shown to the user. **Not proof**: an app can be tampered with. Your server
 /// must read the session with its API key (GET /api/v1/sessions/{id}) before acting on it.
 class FaceVerificationResult {
-  const FaceVerificationResult({required this.sessionId, required this.status, this.failureCode, this.failureFrame});
+  const FaceVerificationResult({
+    required this.sessionId,
+    required this.status,
+    this.checks = const {FaceCheck.liveness, FaceCheck.faceMatch},
+    this.failureCode,
+    this.failureFrame,
+  });
 
   final String sessionId;
+
+  /// What the session verified.
+  final Set<FaceCheck> checks;
   final FaceSessionStatus status;
   final FaceFailureCode? failureCode;
 
   /// Which photo (0 = facing the camera) the failure is about, when known.
   final int? failureFrame;
 
+  /// True only when every check of the session passed.
   bool get passed => status == FaceSessionStatus.verificationPassed;
 
   @override

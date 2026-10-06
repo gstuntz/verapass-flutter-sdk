@@ -24,8 +24,11 @@ enum FaceVerificationErrorCode {
   /// The session expired before it was completed.
   sessionExpired,
 
-  /// Your server hasn't uploaded a reference photo for the session.
+  /// The session checks face match, but your server hasn't uploaded its reference photo.
   referenceMissing,
+
+  /// The session skips a check listed in [FaceVerificationOptions.checks].
+  checksMismatch,
 
   /// The user didn't complete a step in time (nothing was submitted).
   stepTimeout,
