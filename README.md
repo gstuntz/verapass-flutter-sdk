@@ -38,6 +38,33 @@ The app can't change a session's checks. To make sure it never runs a session we
 expect, set `FaceVerificationOptions(checks: {FaceCheck.liveness, FaceCheck.faceMatch})`: a
 session that skips any of them fails with `checksMismatch`.
 
+## Strictness: how sure the check must be
+
+Each project chooses how strict face match and liveness are: **Standard** (default),
+**Strict**, or **Very strict** (Dashboard → Projects → your project). Your server can raise
+it for one session, for example before a large payout:
+
+```json
+{"checks": ["liveness", "face_match"], "match_strictness": "very_strict"}
+```
+
+| Level | Face match | Liveness |
+|---|---|---|
+| Standard | Balanced; recommended for most sign-ups | Stops printed photos and most screen replays |
+| Strict | Needs a closer match; more retries with old or low-quality reference photos | Every photo must look clearly live; more retries in poor lighting |
+| Very strict | For high-risk actions; noticeably more retries | Rejects anything not unmistakably live; good lighting matters |
+
+Stricter settings reject more impostors and spoofs, and ask more real people to try again.
+They can only make checks harder to pass than the defaults, never easier, and can't be
+lowered for a session.
+
+**What changes in the SDK:** nothing in the flow. The user takes the same photos; a strict
+session is just more likely to end with `not_matched` or `liveness_failed`. The on-screen
+messages stay the same (they never reveal scores or thresholds). If many of your users
+retry, check the session details in the dashboard: each session shows the strictness and
+threshold that decided it. Advise users to face a window or lamp, remove hats and glasses,
+and hold still.
+
 ## Usage
 
 ```dart

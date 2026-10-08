@@ -1,6 +1,6 @@
 name: verapass
 description: Face verification for Flutter apps (iOS and Android) - camera, on-device guidance, the liveness check, and results, using veraPass session client tokens.
-version: 0.2.0
+version: 0.2.1
 homepage: https://verapass.app/
 repository: https://github.com/gstuntz/verapass-flutter-sdk
 issue_tracker: https://github.com/gstuntz/verapass-flutter-sdk/issues

@@ -1,3 +1,7 @@
+## 0.2.1
+
+* Docs: strictness presets (Standard, Strict, Very strict), what they mean for your users, and how to read a rejection.
+
 ## 0.2.0
 
 * Verification checks: sessions verify liveness, face match, or both, as chosen by your server. The SDK captures only what the session needs: no head turns without liveness, and no reference is required without face match.
