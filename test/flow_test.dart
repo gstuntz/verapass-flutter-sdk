@@ -150,6 +150,7 @@ class FakeServer {
   String? failureCode;
   int? verifyError;
   final posts = <(String token, List<String> fields)>[];
+  String? reportedClient; // what the SDK reported about itself
   final tokensSeen = <String>[];
 
   Map<String, Object?> _session() => {
@@ -169,7 +170,9 @@ class FakeServer {
     tokensSeen.add(token);
     if (!token.startsWith('fpct_')) return http.Response('{"detail":"Invalid or missing client token"}', 401);
     if (request.method == 'POST') {
-      final fields = RegExp(r'name="(\w+)"').allMatches(utf8.decode(request.bodyBytes, allowMalformed: true)).map((m) => m.group(1)!).toList();
+      final body = utf8.decode(request.bodyBytes, allowMalformed: true);
+      final fields = RegExp(r'name="(\w+)"').allMatches(body).map((m) => m.group(1)!).where((f) => f != 'client').toList();
+      reportedClient = RegExp(r'name="client"\r\n\r\n([^\r]*)').firstMatch(body)?.group(1);
       posts.add((token, fields));
       if (verifyError != null) return http.Response('{"detail":"boom"}', verifyError!);
       status = verifyStatus;
@@ -257,6 +260,14 @@ void main() {
     await tester.tap(find.text('Done'));
     await tester.pump();
     expect(h.outcome!.result!.passed, isTrue);
+  });
+
+  testWidgets('tells the server which SDK completed the session', (tester) async {
+    final h = Harness();
+    await open(tester, h.view());
+    await advance(tester, const Duration(seconds: 15));
+
+    expect(h.server.reportedClient, startsWith('flutter/0.2.2'));
   });
 
   testWidgets('one probe photo for sessions without a liveness challenge', (tester) async {

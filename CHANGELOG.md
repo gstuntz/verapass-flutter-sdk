@@ -1,3 +1,7 @@
+## 0.2.2
+
+* Each verification reports which SDK version and platform completed it, so the dashboard can show where every session was done.
+
 ## 0.2.1
 
 * Docs: strictness presets (Standard, Strict, Very strict), what they mean for your users, and how to read a rejection.

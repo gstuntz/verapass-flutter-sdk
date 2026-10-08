@@ -62,6 +62,15 @@ class ClientSession {
 
 const clientTokenPrefix = 'fpct_';
 
+/// Keep in step with pubspec.yaml. Sent with each verify so the server can record which SDK
+/// (and platform) completed the session.
+const sdkVersion = '0.2.2';
+
+String clientLabel() {
+  final os = Platform.isIOS ? 'ios' : Platform.isAndroid ? 'android' : null;
+  return 'flutter/$sdkVersion${os == null ? '' : '; $os'}';
+}
+
 /// Talks only to the client-token endpoints. Never sees or sends an API key.
 class ClientApi {
   ClientApi(Uri apiUrl, this._token, {http.Client? client, this.timeout = const Duration(seconds: 60)})
@@ -87,6 +96,7 @@ class ClientApi {
     for (final (i, photo) in photos.indexed) {
       request.files.add(http.MultipartFile.fromBytes(field, photo, filename: '$field-$i.jpg'));
     }
+    request.fields['client'] = clientLabel();
     return _send(request);
   }
 
