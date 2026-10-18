@@ -18,6 +18,10 @@ import '../options.dart';
 ///   capture connection), so they are un-mirrored here.
 /// - Android delivers frames in sensor orientation, unmirrored; they are rotated upright by
 ///   the camera's sensor angle.
+/// The optional liveness clip's bitrate and the server's size limit.
+const clipBitrate = 250000;
+const clipMaxBytes = 3 * 1024 * 1024;
+
 class CameraFrameSource implements FrameSource {
   CameraFrameSource(this.options);
 
@@ -60,6 +64,8 @@ class CameraFrameSource implements FrameSource {
         FaceCameraResolution.veryHigh => ResolutionPreset.veryHigh,
       },
       enableAudio: false,
+      // Only used by the optional liveness clip: ~30 KB per second.
+      videoBitrate: clipBitrate,
       imageFormatGroup: Platform.isIOS ? ImageFormatGroup.bgra8888 : ImageFormatGroup.yuv420,
     );
     try {
@@ -86,6 +92,37 @@ class CameraFrameSource implements FrameSource {
         mirrored: Platform.isIOS && front,
       ),
     );
+  }
+
+  @override
+  Future<bool> startClip() async {
+    final controller = _controller;
+    if (controller == null || _closed || controller.value.isRecordingVideo) return false;
+    try {
+      // Recording takes over the image stream and keeps delivering frames to _onImage.
+      if (controller.value.isStreamingImages) await controller.stopImageStream();
+      await controller.startVideoRecording(onAvailable: _onImage);
+      return true;
+    } on CameraException catch (e) {
+      debugPrint('[verapass] Liveness clip unavailable: ${e.code}');
+      if (!controller.value.isStreamingImages && !_closed) await controller.startImageStream(_onImage);
+      return false;
+    }
+  }
+
+  @override
+  Future<Uint8List?> stopClip() async {
+    final controller = _controller;
+    if (controller == null || !controller.value.isRecordingVideo) return null;
+    try {
+      final file = await controller.stopVideoRecording();
+      final bytes = await file.readAsBytes();
+      unawaited(File(file.path).delete().catchError((Object _) => File(file.path)));
+      return bytes.length <= clipMaxBytes ? bytes : null;
+    } on Object catch (e) {
+      debugPrint('[verapass] Liveness clip failed: $e');
+      return null;
+    }
   }
 
   @override

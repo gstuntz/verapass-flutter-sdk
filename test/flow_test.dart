@@ -47,6 +47,22 @@ class FakeCamera implements FrameSource {
   @override
   double? get previewAspectRatio => 9 / 16;
 
+  bool recording = false;
+
+  @override
+  Future<bool> startClip() async {
+    log.add('startClip');
+    return recording = true;
+  }
+
+  @override
+  Future<Uint8List?> stopClip() async {
+    if (!recording) return null;
+    recording = false;
+    log.add('stopClip');
+    return Uint8List.fromList([0, 0, 0, 24, ...'ftypmp42'.codeUnits]);
+  }
+
   @override
   Future<void> close() async {
     if (closed) return;
@@ -150,6 +166,7 @@ class FakeServer {
   String? failureCode;
   int? verifyError;
   final posts = <(String token, List<String> fields)>[];
+  bool recordVideo = false;
   String? reportedClient; // what the SDK reported about itself
   final tokensSeen = <String>[];
 
@@ -163,12 +180,13 @@ class FakeServer {
     'reference_ready': referenceReady,
     'failure_code': failureCode,
     'failure_frame': null,
+    'record_video': recordVideo,
   };
 
   http.Client client() => MockClient((request) async {
     final token = request.headers['X-Client-Token'] ?? '';
     tokensSeen.add(token);
-    if (!token.startsWith('fpct_')) return http.Response('{"detail":"Invalid or missing client token"}', 401);
+    if (!token.startsWith('vpct_')) return http.Response('{"detail":"Invalid or missing client token"}', 401);
     if (request.method == 'POST') {
       final body = utf8.decode(request.bodyBytes, allowMalformed: true);
       final fields = RegExp(r'name="(\w+)"').allMatches(body).map((m) => m.group(1)!).where((f) => f != 'client').toList();
@@ -208,7 +226,7 @@ class Harness {
   final errors = <FaceVerificationException>[];
   FaceVerificationOutcome? outcome;
 
-  Widget view({String? token = 'fpct_token1', Future<String> Function()? provider, FaceVerificationOptions options = const FaceVerificationOptions()}) => MaterialApp(
+  Widget view({String? token = 'vpct_token1', Future<String> Function()? provider, FaceVerificationOptions options = const FaceVerificationOptions()}) => MaterialApp(
     home: FaceVerificationView(
       apiUrl: Uri.parse('https://api.test'),
       clientToken: provider == null ? token : null,
@@ -262,12 +280,22 @@ void main() {
     expect(h.outcome!.result!.passed, isTrue);
   });
 
+  testWidgets('records a liveness clip only when the session asks for one', (tester) async {
+    final h = Harness(server: FakeServer()..recordVideo = true);
+    await open(tester, h.view());
+    await advance(tester, const Duration(seconds: 15));
+
+    expect(find.text('Verification complete'), findsOneWidget);
+    expect(h.server.posts.single.$2, ['frames', 'frames', 'frames', 'video']);
+    expect(h.cameraLog, ['open', 'startClip', 'stopClip', 'close']); // clip finished before the camera closes
+  });
+
   testWidgets('tells the server which SDK completed the session', (tester) async {
     final h = Harness();
     await open(tester, h.view());
     await advance(tester, const Duration(seconds: 15));
 
-    expect(h.server.reportedClient, startsWith('flutter/0.2.2'));
+    expect(h.server.reportedClient, startsWith('flutter/0.3.0'));
   });
 
   testWidgets('one probe photo for sessions without a liveness challenge', (tester) async {
@@ -405,7 +433,7 @@ void main() {
     h.server
       ..verifyStatus = 'verification_failed'
       ..failureCode = 'not_matched';
-    final tokens = ['fpct_first', 'fpct_second'];
+    final tokens = ['vpct_first', 'vpct_second'];
     await open(tester, h.view(provider: () async => tokens.removeAt(0)));
     await advance(tester, const Duration(seconds: 15));
     expect(find.text("Your face didn't match our records."), findsOneWidget);
@@ -418,7 +446,7 @@ void main() {
     await advance(tester, const Duration(seconds: 15));
 
     expect(find.text('Verification complete'), findsOneWidget);
-    expect(h.server.posts.map((p) => p.$1), ['fpct_first', 'fpct_second']);
+    expect(h.server.posts.map((p) => p.$1), ['vpct_first', 'vpct_second']);
   });
 
   testWidgets('two turns the same way need a look back in between; a stuck user cannot pass', (tester) async {
@@ -542,7 +570,7 @@ void main() {
 
   testWidgets('an API key instead of a client token is refused, never sent', (tester) async {
     final h = Harness();
-    await open(tester, h.view(token: 'fpk_abcdefgh_secret'));
+    await open(tester, h.view(token: 'vp_live_abcdefgh_secret'));
     await advance(tester, const Duration(milliseconds: 300));
 
     expect(find.textContaining("isn't set up correctly"), findsOneWidget);
@@ -551,7 +579,7 @@ void main() {
 
   test('FaceVerification.start refuses API keys before opening anything', () {
     expect(
-      () => FaceVerification.start(_NoContext(), apiUrl: Uri.parse('https://a'), clientToken: 'fpk_x_y'),
+      () => FaceVerification.start(_NoContext(), apiUrl: Uri.parse('https://a'), clientToken: 'vp_live_x_y'),
       throwsA(isA<FaceVerificationException>().having((e) => e.code, 'code', FaceVerificationErrorCode.configurationError)),
     );
   });

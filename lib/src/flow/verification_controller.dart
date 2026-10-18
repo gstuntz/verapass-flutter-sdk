@@ -185,12 +185,15 @@ class VerificationController extends ChangeNotifier {
         await _openCamera();
         run.check();
       }
+      // For review only (projects that keep media); never affects the result.
+      final recording = _session!.checksLiveness && _session!.recordVideo && (await _source?.startClip() ?? false);
       await _capture(run);
+      final clip = recording ? await _source?.stopClip() : null;
       await _closeCamera();
       run.check();
       _setBusy(FlowPhase.submitting, messages.submitting);
       unawaited(_speaker.say(messages.submitting, instruction: true));
-      final finished = await _api!.verify(List.of(_photos), liveness: _session!.checksLiveness);
+      final finished = await _api!.verify(List.of(_photos), liveness: _session!.checksLiveness, video: clip);
       run.check();
       _showResult(finished.toResult());
     } on _Cancelled {
@@ -427,10 +430,10 @@ class VerificationController extends ChangeNotifier {
   static void checkToken(String token) => _checkToken(token);
 
   static void _checkToken(String token) {
-    if (token.startsWith('fpk_') || !token.startsWith(clientTokenPrefix)) {
+    if (RegExp(r'^(vp_(live|test)_|fpk_)').hasMatch(token) || !isClientToken(token)) {
       throw const FaceVerificationException(
         FaceVerificationErrorCode.configurationError,
-        'Never put an API key in an app. Create a session on your server and pass its client_token (fpct_...).',
+        'Never put an API key in an app. Create a session on your server and pass its client_token (vpct_...).',
       );
     }
   }

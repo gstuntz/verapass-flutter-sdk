@@ -18,6 +18,7 @@ class ClientSession {
     this.checks = const {FaceCheck.liveness, FaceCheck.faceMatch},
     this.failureCode,
     this.failureFrame,
+    this.recordVideo = false,
   });
 
   factory ClientSession.fromJson(Map<String, Object?> json) => ClientSession(
@@ -28,6 +29,7 @@ class ClientSession {
     referenceReady: json['reference_ready'] as bool? ?? false,
     failureCode: FaceFailureCode.parse(json['failure_code'] as String?),
     failureFrame: json['failure_frame'] as int?,
+    recordVideo: json['record_video'] as bool? ?? false,
   );
 
   final String id;
@@ -37,6 +39,10 @@ class ClientSession {
   /// What the session verifies; decides what is captured.
   final Set<FaceCheck> checks;
   final bool referenceReady;
+
+  /// Record a short clip of the liveness step and send it with the frames (the project
+  /// keeps media for review). Never affects the result.
+  final bool recordVideo;
 
   bool get checksLiveness => checks.contains(FaceCheck.liveness);
   bool get checksFaceMatch => checks.contains(FaceCheck.faceMatch);
@@ -60,11 +66,14 @@ class ClientSession {
   );
 }
 
-const clientTokenPrefix = 'fpct_';
+// 'fpct_' tokens were issued before the rename to 'vpct_'; the server still accepts them.
+const clientTokenPrefixes = ['vpct_', 'fpct_'];
+
+bool isClientToken(String token) => clientTokenPrefixes.any(token.startsWith);
 
 /// Keep in step with pubspec.yaml. Sent with each verify so the server can record which SDK
 /// (and platform) completed the session.
-const sdkVersion = '0.2.2';
+const sdkVersion = '0.3.0';
 
 String clientLabel() {
   final os = Platform.isIOS ? 'ios' : Platform.isAndroid ? 'android' : null;
@@ -76,8 +85,8 @@ class ClientApi {
   ClientApi(Uri apiUrl, this._token, {http.Client? client, this.timeout = const Duration(seconds: 60)})
     : _base = apiUrl.replace(path: '${apiUrl.path.replaceAll(RegExp(r'/+$'), '')}/api/v1/client/session'),
       _client = client ?? http.Client() {
-    if (!_token.startsWith(clientTokenPrefix)) {
-      throw const FaceVerificationException(FaceVerificationErrorCode.configurationError, 'clientToken must be a session client token (fpct_...)');
+    if (!isClientToken(_token)) {
+      throw const FaceVerificationException(FaceVerificationErrorCode.configurationError, 'clientToken must be a session client token (vpct_...)');
     }
   }
 
@@ -90,12 +99,14 @@ class ClientApi {
 
   /// Submits photos in order: facing the camera, then one per challenge action
   /// (field "frames"), or a single "probe" for sessions that don't check liveness.
-  Future<ClientSession> verify(List<Uint8List> photos, {required bool liveness}) {
+  /// [video] is the optional liveness clip (MP4/MOV), kept for review.
+  Future<ClientSession> verify(List<Uint8List> photos, {required bool liveness, Uint8List? video}) {
     final request = http.MultipartRequest('POST', _base.replace(path: '${_base.path}/verify'));
     final field = liveness ? 'frames' : 'probe';
     for (final (i, photo) in photos.indexed) {
       request.files.add(http.MultipartFile.fromBytes(field, photo, filename: '$field-$i.jpg'));
     }
+    if (video != null) request.files.add(http.MultipartFile.fromBytes('video', video, filename: 'liveness.mp4'));
     request.fields['client'] = clientLabel();
     return _send(request);
   }

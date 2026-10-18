@@ -15,7 +15,7 @@ There's no API key in the app. Anything shipped inside an app can be extracted, 
 ever gets a **session client token**.
 
 ```
-your server ──API key──► POST /api/v1/sessions {checks} (+ /reference)  → client_token (fpct_…)
+your server ──API key──► POST /api/v1/sessions {checks} (+ /reference)  → client_token (vpct_…)
 your app    ──────────► FaceVerification.start(clientTokenProvider: …)   camera, guidance, liveness
 your server ──API key──► GET /api/v1/sessions/{id}                       the result you act on
 ```
@@ -109,8 +109,8 @@ One view is one verification. To start a new one in the same place, give it a ne
 | `FaceVerificationOptions` | See below. |
 | `FaceVerificationMessages` | All user-facing text. `.en`, `.es`, `.fr`, or your own (`copyWith`). |
 
-Use `clientToken: 'fpct_…'` for a single session (no retry after a result), or
-`clientTokenProvider` to allow retries. An API key (`fpk_…`) is refused.
+Use `clientToken: 'vpct_…'` for a single session (no retry after a result), or
+`clientTokenProvider` to allow retries. An API key (`vp_live_…`) is refused.
 
 ### Options
 
@@ -125,6 +125,15 @@ Use `clientToken: 'fpct_…'` for a single session (no retry after a result), or
 | `theme` | follows app | `FaceVerificationTheme(brightness:, accentColor:, backgroundColor:, textColor:)`. |
 | `camera` | front, 720p | `FaceCameraOptions(lens: front \| back, resolution: medium \| high \| veryHigh)`. |
 | `stepTimeout` | 30 s | Time per step before the user is offered a retry. |
+
+## Liveness video (optional)
+
+When the session's `record_video` is true (the project keeps photos and video for review),
+the SDK records the head-turn steps as a short, low-bitrate clip (about 250 kbps, using the
+`camera` plugin's video recording while it keeps analyzing frames) and sends it with the
+photos. It is for people reviewing the session and never affects the result. No audio is
+recorded, so no microphone permission is needed; if recording isn't possible on a device,
+no clip is sent.
 
 ## Platform requirements
 

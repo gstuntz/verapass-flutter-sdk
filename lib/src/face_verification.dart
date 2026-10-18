@@ -13,7 +13,7 @@ import 'ui/verification_view.dart';
 /// final result = await FaceVerification.start(
 ///   context,
 ///   apiUrl: Uri.parse('https://api.example.com'),
-///   clientTokenProvider: () => myBackend.startFaceVerification(), // returns "fpct_..."
+///   clientTokenProvider: () => myBackend.startFaceVerification(), // returns "vpct_..."
 ///   options: const FaceVerificationOptions(voice: true),
 /// );
 /// if (result.passed) await myBackend.confirmFaceVerification(result.sessionId);

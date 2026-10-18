@@ -70,6 +70,10 @@ class RecordedCamera implements FrameSource {
   bool get previewMirrored => true;
   @override
   double? get previewAspectRatio => 9 / 16;
+  @override
+  Future<bool> startClip() async => false; // recorded frames, no camera to film
+  @override
+  Future<Uint8List?> stopClip() async => null;
 
   @override
   Future<void> close() async {

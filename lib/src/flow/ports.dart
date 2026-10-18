@@ -23,6 +23,13 @@ abstract class FrameSource {
   /// Width / height of the upright preview (e.g. 9/16 for a portrait 720p stream), once open.
   double? get previewAspectRatio;
 
+  /// Starts recording a short, low-bitrate clip while frames keep arriving. Returns false
+  /// if this device can't record; the clip is for review only and never affects the result.
+  Future<bool> startClip();
+
+  /// Stops recording and returns the clip, or null if there is none (or it is too large).
+  Future<Uint8List?> stopClip();
+
   /// Releases the camera. Safe to call more than once.
   Future<void> close();
 }
