@@ -1,3 +1,7 @@
+## 0.3.1
+
+* Docs: create a free account at https://app.verapass.app/signup to get an API key.
+
 ## 0.3.0
 
 * Liveness video for review: when the session asks for it (`record_video`, set by projects that keep photos and video), the SDK records a short, low-bitrate clip (about 250 kbps) of the head-turn steps and sends it with the photos. It never affects the result, and nothing is recorded otherwise.

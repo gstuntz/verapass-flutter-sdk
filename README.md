@@ -5,8 +5,9 @@ liveness check, spoken instructions, and the result. It uses the same API and fl
 
 ## Get an API key
 
-To get an API key, visit [verapass.app](https://verapass.app/) and create a free account.
-Create a project, then an API key under **API keys**. Keep the key on your server: the app
+To get an API key, create a free account at
+[app.verapass.app/signup](https://app.verapass.app/signup). Then create a project, and an API
+key under **API keys**. Keep the key on your server: the app
 never holds it.
 
 ## How it fits together

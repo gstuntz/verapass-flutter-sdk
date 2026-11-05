@@ -73,7 +73,7 @@ bool isClientToken(String token) => clientTokenPrefixes.any(token.startsWith);
 
 /// Keep in step with pubspec.yaml. Sent with each verify so the server can record which SDK
 /// (and platform) completed the session.
-const sdkVersion = '0.3.0';
+const sdkVersion = '0.3.1';
 
 String clientLabel() {
   final os = Platform.isIOS ? 'ios' : Platform.isAndroid ? 'android' : null;

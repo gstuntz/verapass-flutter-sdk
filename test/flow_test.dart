@@ -295,7 +295,7 @@ void main() {
     await open(tester, h.view());
     await advance(tester, const Duration(seconds: 15));
 
-    expect(h.server.reportedClient, startsWith('flutter/0.3.0'));
+    expect(h.server.reportedClient, startsWith('flutter/0.3.1'));
   });
 
   testWidgets('one probe photo for sessions without a liveness challenge', (tester) async {
