@@ -1,4 +1,4 @@
-## Unreleased
+## 0.4.0
 
 * Time limit: the intro says how long the person has ("You have 9 minutes to finish.") and a countdown appears in the last 2 minutes. New `FaceVerificationOptions.timeLimit` (default `true`) turns both off. Either way, an expired session is refused before capture starts and the attempt ends when time runs out. Uses the server's `expires_in`, so a wrong device clock doesn't matter. New messages `timeLimit` and `timeLeft` (English, Spanish, French; optional in custom message sets).
 
