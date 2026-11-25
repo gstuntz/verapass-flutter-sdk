@@ -11,6 +11,7 @@ import '../guidance/pose.dart';
 import '../l10n/messages.dart';
 import '../options.dart';
 import '../result.dart';
+import 'deadline.dart';
 import 'ports.dart';
 
 const _holdTime = Duration(milliseconds: 700); // a pose must be held this long before capture
@@ -41,6 +42,9 @@ class VerificationController extends ChangeNotifier {
        messages = options.resolvedMessages {
     _speaker = _BoundedSpeaker(dependencies.speaker(options.voice, messages.speechLocale));
     phase = options.instructions ? FlowPhase.intro : FlowPhase.starting;
+    // Only for a session that already exists: a token provider may create one, and its
+    // clock shouldn't start before the person taps Start.
+    if (phase == FlowPhase.intro && options.timeLimit && _fixedToken != null) unawaited(_loadTimeLimit());
   }
 
   final Uri apiUrl;
@@ -67,6 +71,12 @@ class VerificationController extends ChangeNotifier {
   FaceVerificationResult? result;
   FaceVerificationException? error;
 
+  /// Intro: "You have N minutes to finish." (timeLimit option, once the session is known).
+  String? timeLimitText;
+
+  /// The countdown in the last 2 minutes (timeLimit option), else null.
+  String? timeLeftText;
+
   /// The camera, while it is open (for the preview).
   FrameSource? get frameSource => _source;
 
@@ -86,6 +96,7 @@ class VerificationController extends ChangeNotifier {
   StreamSubscription<CameraFrame>? _frameSub;
   CameraFrame? _latestFrame;
   bool _disposed = false;
+  Timer? _ticker;
 
   /// Starts the flow when there is no intro screen; call from the view once it's mounted.
   void startIfNoIntro() {
@@ -141,6 +152,7 @@ class VerificationController extends ChangeNotifier {
   /// Leave (close button, back gesture, Done). Settles [done]; safe to call twice.
   void close() {
     if (phase == FlowPhase.closed) return;
+    _stopCountdown();
     _run?.cancel();
     _run = null;
     unawaited(_speaker.stop());
@@ -191,6 +203,7 @@ class VerificationController extends ChangeNotifier {
       final clip = recording ? await _source?.stopClip() : null;
       await _closeCamera();
       run.check();
+      _stopCountdown(); // the server decides from here
       _setBusy(FlowPhase.submitting, messages.submitting);
       unawaited(_speaker.say(messages.submitting, instruction: true));
       final finished = await _api!.verify(List.of(_photos), liveness: _session!.checksLiveness, video: clip);
@@ -235,6 +248,7 @@ class VerificationController extends ChangeNotifier {
     if (session.status != FaceSessionStatus.created) {
       throw FaceVerificationException(FaceVerificationErrorCode.sessionUsed, 'Session is ${session.status.name}');
     }
+    _startCountdown(session);
     if (cameraError != null) throw cameraError;
     final missing = (options.checks ?? const <FaceCheck>{}).difference(session.checks);
     if (missing.isNotEmpty) {
@@ -365,6 +379,7 @@ class VerificationController extends ChangeNotifier {
   // --- Outcomes --------------------------------------------------------------------------------
 
   void _showResult(FaceVerificationResult outcome) {
+    _stopCountdown();
     result = outcome;
     error = null;
     phase = FlowPhase.result;
@@ -374,10 +389,72 @@ class VerificationController extends ChangeNotifier {
 
   void _showError(FaceVerificationException e) {
     if (e.code == FaceVerificationErrorCode.cancelled) return;
+    _stopCountdown();
     error = e;
     phase = FlowPhase.error;
     _notify();
     unawaited(_speaker.say(messages.errors[e.code] ?? messages.errorTitle, instruction: true));
+  }
+
+  // --- Time limit ------------------------------------------------------------------------------
+
+  /// On the intro: "You have N minutes to finish", or straight to "expired".
+  Future<void> _loadTimeLimit() async {
+    try {
+      final api = dependencies.api(apiUrl, await _getToken());
+      final ClientSession session;
+      try {
+        session = await api.getSession();
+      } finally {
+        api.close();
+      }
+      if (phase != FlowPhase.intro) return;
+      final now = clock.now();
+      final deadline = deadlineFrom(session, now);
+      if (session.status == FaceSessionStatus.expired || (deadline != null && !deadline.isAfter(now))) {
+        _showError(const FaceVerificationException(FaceVerificationErrorCode.sessionExpired, 'Session expired'));
+      } else if (deadline != null) {
+        timeLimitText = messages.timeLimit(minutesLeft(deadline.difference(now)));
+        _notify();
+      }
+    } catch (_) {
+      // Start reports any problem with the session.
+    }
+  }
+
+  /// Refuses an expired session before capture, shows the countdown in the last 2 minutes
+  /// (timeLimit option), and ends the attempt when time runs out.
+  void _startCountdown(ClientSession session) {
+    _stopCountdown();
+    final now = clock.now();
+    final deadline = deadlineFrom(session, now);
+    if (deadline == null) return;
+    if (!deadline.isAfter(now)) throw const FaceVerificationException(FaceVerificationErrorCode.sessionExpired, 'Session expired');
+    void tick() {
+      final left = deadline.difference(clock.now());
+      if (left <= Duration.zero) {
+        _run?.cancel();
+        _run = null;
+        unawaited(_speaker.stop());
+        unawaited(_closeCamera());
+        _showError(const FaceVerificationException(FaceVerificationErrorCode.sessionExpired, 'Session expired'));
+        return;
+      }
+      final text = options.timeLimit && left <= countdownFrom ? messages.timeLeft(formatClock(left)) : null;
+      if (text != timeLeftText) {
+        timeLeftText = text;
+        _notify();
+      }
+      _ticker = Timer(left < const Duration(seconds: 1) ? left : const Duration(seconds: 1), tick);
+    }
+
+    tick();
+  }
+
+  void _stopCountdown() {
+    _ticker?.cancel();
+    _ticker = null;
+    timeLeftText = null;
   }
 
   // --- Resources -------------------------------------------------------------------------------

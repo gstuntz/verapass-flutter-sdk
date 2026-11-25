@@ -30,6 +30,8 @@ class FaceVerificationMessages {
     required this.errors,
     required this.cameraLabel,
     required this.speechLocale,
+    this.timeLimit = _timeLimitEn,
+    this.timeLeft = _timeLeftEn,
   });
 
   final String title;
@@ -59,6 +61,15 @@ class FaceVerificationMessages {
   /// BCP 47 locale for the device's text-to-speech voice.
   final String speechLocale;
 
+  /// Intro: how long the person has, e.g. "You have 9 minutes to finish."
+  final String Function(int minutes) timeLimit;
+
+  /// Countdown in the last 2 minutes, e.g. "Time left: 1:45".
+  final String Function(String clock) timeLeft;
+
+  static String _timeLimitEn(int m) => 'You have $m minute${m == 1 ? '' : 's'} to finish.';
+  static String _timeLeftEn(String clock) => 'Time left: $clock';
+
   /// Built-in messages for [language] ("en", "es", "fr", or a regional tag like "es-MX");
   /// anything else falls back to English.
   static FaceVerificationMessages forLanguage(String language) => switch (language.toLowerCase().split(RegExp('[-_]')).first) {
@@ -79,6 +90,8 @@ class FaceVerificationMessages {
     Map<Guidance, String>? guidance,
     Map<FaceFailureCode, String>? failure,
     Map<FaceVerificationErrorCode, String>? errors,
+    String Function(int minutes)? timeLimit,
+    String Function(String clock)? timeLeft,
   }) => FaceVerificationMessages(
     title: title ?? this.title,
     introBody: introBody ?? this.introBody,
@@ -104,6 +117,8 @@ class FaceVerificationMessages {
     errors: {...this.errors, ...?errors},
     cameraLabel: cameraLabel,
     speechLocale: speechLocale,
+    timeLimit: timeLimit ?? this.timeLimit,
+    timeLeft: timeLeft ?? this.timeLeft,
   );
 
   static final en = FaceVerificationMessages(
@@ -226,6 +241,8 @@ class FaceVerificationMessages {
     },
     cameraLabel: 'Vista previa de la cámara',
     speechLocale: 'es-ES',
+    timeLimit: (m) => 'Tienes $m minuto${m == 1 ? '' : 's'} para terminar.',
+    timeLeft: (clock) => 'Tiempo restante: $clock',
   );
 
   static final fr = FaceVerificationMessages(
@@ -280,5 +297,7 @@ class FaceVerificationMessages {
     },
     cameraLabel: 'Aperçu de la caméra',
     speechLocale: 'fr-FR',
+    timeLimit: (m) => 'Vous avez $m minute${m > 1 ? 's' : ''} pour terminer.',
+    timeLeft: (clock) => 'Temps restant : $clock',
   );
 }

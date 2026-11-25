@@ -32,6 +32,7 @@ class FaceVerificationOptions {
   const FaceVerificationOptions({
     this.voice = false,
     this.instructions = true,
+    this.timeLimit = true,
     this.checks,
     @Deprecated('The session\'s checks decide; use `checks` to assert what your app expects') this.liveness = true,
     this.language = 'en',
@@ -46,6 +47,11 @@ class FaceVerificationOptions {
 
   /// Show the intro screen and on-screen hints. Screen readers always get the hints.
   final bool instructions;
+
+  /// Tell the person how long they have (on the intro) and show a countdown in the last 2
+  /// minutes. Either way, an expired session is refused before capture starts and the
+  /// attempt ends when time runs out (the server would refuse it).
+  final bool timeLimit;
 
   /// The checks your app expects. What is captured follows the session's checks, set by
   /// your server when it creates the session; this can't change them, but the SDK refuses

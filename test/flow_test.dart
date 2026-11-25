@@ -167,6 +167,7 @@ class FakeServer {
   int? verifyError;
   final posts = <(String token, List<String> fields)>[];
   bool recordVideo = false;
+  int? expiresIn; // seconds left; null: an older server that only sends expires_at
   String? reportedClient; // what the SDK reported about itself
   final tokensSeen = <String>[];
 
@@ -176,6 +177,7 @@ class FakeServer {
     'checks': ?checks,
     'challenge': challenge.isEmpty ? null : challenge,
     'expires_at': null,
+    'expires_in': ?expiresIn,
     'completed_at': null,
     'reference_ready': referenceReady,
     'failure_code': failureCode,
@@ -355,6 +357,73 @@ void main() {
     await tester.tap(find.text('Start'));
     await advance(tester, const Duration(seconds: 15));
     expect(find.text('Verification complete'), findsOneWidget);
+  });
+
+  group('time limit', () {
+    testWidgets('the intro says how long the person has', (tester) async {
+      final h = Harness(server: FakeServer()..expiresIn = 540);
+      await tester.pumpWidget(h.view());
+      await tester.pump();
+      await tester.pump();
+      expect(find.text('You have 9 minutes to finish.'), findsOneWidget);
+    });
+
+    testWidgets('an already-expired session says so on the intro; the camera stays closed', (tester) async {
+      final h = Harness(server: FakeServer()..expiresIn = 0);
+      await tester.pumpWidget(h.view());
+      await tester.pump();
+      await tester.pump();
+      expect(find.text('This verification has expired.'), findsOneWidget);
+      expect(h.cameraLog, isEmpty);
+    });
+
+    testWidgets('a token callback may create the session: nothing is fetched before Start', (tester) async {
+      final h = Harness(server: FakeServer()..expiresIn = 540);
+      await tester.pumpWidget(h.view(provider: () async => 'vpct_token1'));
+      await tester.pump();
+      expect(h.server.tokensSeen, isEmpty);
+      expect(find.textContaining('to finish'), findsNothing);
+    });
+
+    testWidgets('refuses to capture when the session has already expired', (tester) async {
+      final h = Harness(server: FakeServer()..expiresIn = 0);
+      await tester.pumpWidget(h.view(options: const FaceVerificationOptions(instructions: false)));
+      await advance(tester, const Duration(seconds: 1));
+      expect(find.text('This verification has expired.'), findsOneWidget);
+      expect(h.server.posts, isEmpty);
+      expect(h.cameras.every((c) => c.closed), isTrue);
+    });
+
+    testWidgets('a countdown appears only in the last 2 minutes', (tester) async {
+      final h = Harness(scene: Scene.none, server: FakeServer()..expiresIn = 125);
+      await open(tester, h.view());
+      await advance(tester, const Duration(seconds: 1));
+      expect(find.textContaining('Time left'), findsNothing);
+      await advance(tester, const Duration(seconds: 5));
+      expect(find.textContaining(RegExp(r'^Time left: 1:5\d$')), findsOneWidget);
+      await unmount(tester);
+    });
+
+    testWidgets('time running out ends the attempt with the expired message', (tester) async {
+      final h = Harness(scene: Scene.none, server: FakeServer()..expiresIn = 3);
+      await open(tester, h.view());
+      await advance(tester, const Duration(seconds: 4));
+      expect(find.text('This verification has expired.'), findsOneWidget);
+      expect(h.server.posts, isEmpty);
+      expect(h.cameras.every((c) => c.closed), isTrue);
+    });
+
+    testWidgets('timeLimit: false hides the time limit and the countdown', (tester) async {
+      final h = Harness(scene: Scene.none, server: FakeServer()..expiresIn = 100);
+      await tester.pumpWidget(h.view(options: const FaceVerificationOptions(timeLimit: false)));
+      await tester.pump();
+      expect(find.textContaining('to finish'), findsNothing);
+      expect(h.server.tokensSeen, isEmpty);
+      await tester.tap(find.text('Start'));
+      await advance(tester, const Duration(seconds: 3));
+      expect(find.textContaining('Time left'), findsNothing);
+      await unmount(tester);
+    });
   });
 
   testWidgets('instructions off: no intro, no on-screen hints, screen readers still get them', (tester) async {

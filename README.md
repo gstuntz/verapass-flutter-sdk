@@ -119,6 +119,7 @@ Use `clientToken: 'vpct_…'` for a single session (no retry after a result), or
 |---|---|---|
 | `voice` | `false` | Spoken instructions with the device's own text-to-speech (no network voice service). |
 | `instructions` | `true` | Intro screen and on-screen hints. When off, screen readers still announce the hints. |
+| `timeLimit` | `true` | Tell the person how long they have ("You have 9 minutes to finish.") and show a countdown in the last 2 minutes. Either way, an expired session is refused before capture starts and the attempt ends when time runs out. |
 | `checks` | session's | Checks your app expects (`FaceCheck.liveness`, `FaceCheck.faceMatch`). What's captured follows the session; a session missing one fails with `checksMismatch`. |
 | `liveness` | `true` | Deprecated: the session's checks decide. `false` is ignored with a debug warning. |
 | `language` | `'en'` | `en`, `es`, or `fr` (regional tags like `es-MX` work); others fall back to English. |

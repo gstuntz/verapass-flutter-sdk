@@ -19,6 +19,8 @@ class ClientSession {
     this.failureCode,
     this.failureFrame,
     this.recordVideo = false,
+    this.expiresIn,
+    this.expiresAt,
   });
 
   factory ClientSession.fromJson(Map<String, Object?> json) => ClientSession(
@@ -30,7 +32,13 @@ class ClientSession {
     failureCode: FaceFailureCode.parse(json['failure_code'] as String?),
     failureFrame: json['failure_frame'] as int?,
     recordVideo: json['record_video'] as bool? ?? false,
+    expiresIn: (json['expires_in'] as num?)?.toInt(),
+    expiresAt: DateTime.tryParse(json['expires_at'] as String? ?? ''),
   );
+
+  /// Seconds left, by the server's clock (missing from older servers).
+  final int? expiresIn;
+  final DateTime? expiresAt;
 
   final String id;
   final FaceSessionStatus status;

@@ -233,6 +233,10 @@ class _Intro extends StatelessWidget {
         Semantics(header: true, child: Text(m.title, style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w600))),
         const SizedBox(height: 8),
         Text(m.introBody, style: theme.textTheme.bodyLarge?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
+        if (controller.timeLimitText case final limit?) ...[
+          const SizedBox(height: 8),
+          Text(limit, style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
+        ],
         const SizedBox(height: 20),
         for (final (i, tip) in m.introTips.indexed)
           Padding(
@@ -362,6 +366,21 @@ class _Capture extends StatelessWidget {
             child: Text(
               c.messages.stepOf(math.min(c.step + 1, c.totalSteps), c.totalSteps),
               style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+            ),
+          ),
+        if (c.timeLeftText case final left?)
+          Padding(
+            padding: const EdgeInsets.only(top: 6),
+            child: Semantics(
+              liveRegion: true,
+              child: Text(
+                left,
+                style: theme.textTheme.labelLarge?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                  fontWeight: FontWeight.w600,
+                  fontFeatures: const [FontFeature.tabularFigures()],
+                ),
+              ),
             ),
           ),
         const SizedBox(height: 8),
